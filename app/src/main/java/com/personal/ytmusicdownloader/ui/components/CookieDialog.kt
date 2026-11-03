@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -46,6 +47,7 @@ fun CookieDialog(
     cookieInfo: CookieInfo,
     onImportCookie: (Uri) -> Unit,
     onSaveCookieText: (String) -> Unit,
+    onRestoreDefaultCookie: () -> Unit,
     onDeleteCookie: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -110,7 +112,7 @@ fun CookieDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Cookie disimpan privat di sandbox perangkat. Sistem otomatis menyaring hanya domain YouTube/Google dan membuang token akun lain.",
+                            text = "Cookie otomatis terpasang langsung dari aplikasi secara aman dan terenkripsi.",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -119,14 +121,25 @@ fun CookieDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                Button(
+                    onClick = onRestoreDefaultCookie,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(if (cookieInfo.exists) "Reset ke Cookie Bawaan" else "Pasang Cookie Bawaan")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = pastedText,
                     onValueChange = { pastedText = it },
-                    label = { Text("Tempel Teks Cookie (Netscape)") },
+                    label = { Text("Ubah / Tempel Cookie Manual") },
                     placeholder = { Text("# Netscape HTTP Cookie File...") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 100.dp, max = 150.dp),
+                        .heightIn(min = 90.dp, max = 130.dp),
                     textStyle = MaterialTheme.typography.bodySmall
                 )
 
@@ -156,7 +169,7 @@ fun CookieDialog(
                         enabled = pastedText.isNotBlank(),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Simpan Teks")
+                        Text("Simpan")
                     }
                 }
 

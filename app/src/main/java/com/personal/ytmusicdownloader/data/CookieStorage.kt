@@ -10,6 +10,22 @@ class CookieStorage(private val context: Context) {
     private val targetCookieFile: File
         get() = File(context.filesDir, COOKIE_FILE_NAME)
 
+    init {
+        ensureCookieInstalled()
+    }
+
+    fun ensureCookieInstalled() {
+        if (!hasCookie()) {
+            restoreDefaultCookie()
+        }
+    }
+
+    fun restoreDefaultCookie(): Result<Unit> = runCatching {
+        val defaultText = DefaultCookieProvider.getDecryptedCookie()
+            ?: error("Cookie bawaan tidak dapat dimuat")
+        saveCookieText(defaultText).getOrThrow()
+    }
+
     fun saveCookieFromUri(uri: Uri): Result<Unit> = runCatching {
         val content = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             ?: error("Gagal membaca file dari URI")

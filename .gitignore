@@ -10,6 +10,8 @@
 *.apk
 *.aab
 /app/build
-*cookie*
+*cookies*.txt
+*.cookie
 *.cookies
+youtube_cookies.txt
 

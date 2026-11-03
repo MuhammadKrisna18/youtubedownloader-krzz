@@ -136,6 +136,25 @@ class MainViewModel(
         )
     }
 
+    fun restoreDefaultCookie() {
+        cookieStorage.restoreDefaultCookie().fold(
+            onSuccess = {
+                refreshCookieInfo()
+                _uiState.update {
+                    it.copy(
+                        userMessage = "Cookie bawaan berhasil dipasang",
+                        showCookieDialog = false
+                    )
+                }
+            },
+            onFailure = { error ->
+                _uiState.update {
+                    it.copy(userMessage = "Gagal memasang cookie bawaan: ${error.localizedMessage}")
+                }
+            }
+        )
+    }
+
     fun deleteCookie() {
         val deleted = cookieStorage.deleteCookie()
         refreshCookieInfo()
