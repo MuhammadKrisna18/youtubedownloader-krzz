@@ -81,19 +81,46 @@ class YoutubeDlRepository(
             addOption("--embed-thumbnail")
             addOption("--no-playlist")
             addOption("--no-check-certificates")
+            addOption("--newline")
+            addOption("--progress")
             cookieStorage.getCookieFile()?.let { file ->
                 addOption("--cookies", file.absolutePath)
             }
         }
 
         try {
+            var lastProgress = 0f
             YoutubeDL.getInstance().execute(request, processId) { progress, etaInSeconds, line ->
-                val speedMatch = SPEED_REGEX.find(line.orEmpty())?.value.orEmpty()
-                val etaText = if (etaInSeconds > 0) "${etaInSeconds}s" else ""
-                if (progress >= 100f) {
+                val lineText = line.orEmpty().trim()
+                val isTranscodingLine = TRANSCODING_KEYWORDS.any { lineText.contains(it, ignoreCase = true) }
+
+                if (isTranscodingLine || progress >= 100f) {
                     trySend(DownloadProgress.Transcoding)
+                    return@execute
+                }
+
+                val parsedPercent = PROGRESS_REGEX.find(lineText)?.groupValues?.getOrNull(1)?.toFloatOrNull()
+                val currentPercent = when {
+                    progress >= 0f -> progress
+                    parsedPercent != null -> parsedPercent
+                    else -> null
+                }
+
+                if (currentPercent != null) {
+                    if (currentPercent >= 100f) {
+                        trySend(DownloadProgress.Transcoding)
+                    } else {
+                        lastProgress = currentPercent
+                        val speedMatch = SPEED_REGEX.find(lineText)?.value.orEmpty()
+                        val etaMatch = if (etaInSeconds > 0) "${etaInSeconds}s" else ETA_REGEX.find(lineText)?.groupValues?.getOrNull(1).orEmpty()
+                        trySend(DownloadProgress.Downloading(currentPercent.coerceIn(0f, 99.9f), speedMatch, etaMatch))
+                    }
+                } else if (lastProgress > 0f) {
+                    val speedMatch = SPEED_REGEX.find(lineText)?.value.orEmpty()
+                    val etaMatch = if (etaInSeconds > 0) "${etaInSeconds}s" else ETA_REGEX.find(lineText)?.groupValues?.getOrNull(1).orEmpty()
+                    trySend(DownloadProgress.Downloading(lastProgress.coerceIn(0f, 99.9f), speedMatch, etaMatch))
                 } else {
-                    trySend(DownloadProgress.Downloading(progress, speedMatch, etaText))
+                    trySend(DownloadProgress.Downloading(0f, "", ""))
                 }
             }
 
@@ -120,6 +147,16 @@ class YoutubeDlRepository(
     }.flowOn(Dispatchers.IO)
 
     companion object {
-        private val SPEED_REGEX = """\b\d+(\.\d+)?[kKMGT]?i?B/s\b""".toRegex()
+        private val PROGRESS_REGEX = """\[download\]\s+(\d+(?:\.\d+)?)%""".toRegex()
+        private val SPEED_REGEX = """\b\d+(?:\.\d+)?\s*[kKMGT]?i?B/s\b""".toRegex()
+        private val ETA_REGEX = """ETA\s+([0-9:]+)""".toRegex()
+        private val TRANSCODING_KEYWORDS = listOf(
+            "[ExtractAudio]",
+            "[ffmpeg]",
+            "[Metadata]",
+            "[ThumbnailsConvertor]",
+            "[EmbedSubtitle]",
+            "[FixupM4a]"
+        )
     }
 }

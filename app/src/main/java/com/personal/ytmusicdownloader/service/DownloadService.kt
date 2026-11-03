@@ -101,14 +101,21 @@ class DownloadService : Service() {
                 _downloadState.value = progress
                 when (progress) {
                     is DownloadProgress.Downloading -> {
-                        val progressInt = progress.progressPercent.toInt()
-                        val info = "${progress.progressPercent.toInt()}%  ${progress.speedText}  ${progress.etaText}".trim()
+                        val progressInt = progress.progressPercent.toInt().coerceAtLeast(0)
+                        val isIndeterminate = progress.progressPercent <= 0f
+                        val info = if (isIndeterminate) {
+                            "Menyiapkan unduhan..."
+                        } else {
+                            val speedPart = if (progress.speedText.isNotBlank()) " • ${progress.speedText}" else ""
+                            val etaPart = if (progress.etaText.isNotBlank()) " • ETA ${progress.etaText}" else ""
+                            "${progressInt}%$speedPart$etaPart"
+                        }
                         updateNotification(
                             buildProgressNotification(
                                 title = trackInfo.title,
                                 contentText = info,
                                 progress = progressInt,
-                                isIndeterminate = false
+                                isIndeterminate = isIndeterminate
                             )
                         )
                     }
@@ -116,7 +123,7 @@ class DownloadService : Service() {
                         updateNotification(
                             buildProgressNotification(
                                 title = trackInfo.title,
-                                contentText = "Transcoding audio...",
+                                contentText = "Mengonversi audio & menyematkan cover...",
                                 progress = 100,
                                 isIndeterminate = true
                             )

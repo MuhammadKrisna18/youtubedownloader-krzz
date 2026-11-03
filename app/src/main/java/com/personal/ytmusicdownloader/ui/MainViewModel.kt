@@ -96,7 +96,12 @@ class MainViewModel(
     }
 
     fun cancelDownload(context: Context) {
-        DownloadService.cancel(context)
+        if (_uiState.value.downloadProgress is DownloadProgress.Downloading ||
+            _uiState.value.downloadProgress is DownloadProgress.Transcoding) {
+            DownloadService.cancel(context)
+        } else {
+            _uiState.update { it.copy(downloadProgress = DownloadProgress.Idle) }
+        }
     }
 
     fun importCookie(uri: Uri) {
