@@ -104,7 +104,8 @@ fun MainScreen(
                 url = uiState.url,
                 isLoading = uiState.isLoadingInfo,
                 onUrlChange = { viewModel.onUrlChanged(it) },
-                onAnalyzeClick = { viewModel.fetchTrackInfo() }
+                onAnalyzeClick = { viewModel.fetchTrackInfo() },
+                onPasteAndAnalyze = { viewModel.fetchTrackInfo(it) }
             )
 
             ActiveDownloadCard(
@@ -120,10 +121,8 @@ fun MainScreen(
                 uiState.trackInfo?.let { track ->
                     TrackPreviewCard(
                         trackInfo = track,
-                        selectedFormat = uiState.selectedFormat,
                         isDownloading = uiState.downloadProgress is DownloadProgress.Downloading ||
                                 uiState.downloadProgress is DownloadProgress.Transcoding,
-                        onFormatSelect = { viewModel.selectFormat(it) },
                         onDownloadClick = { viewModel.startDownload(context) }
                     )
                 }

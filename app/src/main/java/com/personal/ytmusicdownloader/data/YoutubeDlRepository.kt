@@ -1,8 +1,10 @@
 package com.personal.ytmusicdownloader.data
 
+import android.content.Context
 import com.personal.ytmusicdownloader.model.AudioFormat
 import com.personal.ytmusicdownloader.model.DownloadProgress
 import com.personal.ytmusicdownloader.model.TrackInfo
+import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
@@ -15,14 +17,29 @@ import java.io.File
 import java.util.UUID
 
 class YoutubeDlRepository(
+    private val context: Context,
     private val cookieStorage: CookieStorage
 ) : DownloadRepository {
 
+    private fun ensureInitialized(): Result<Unit> = runCatching {
+        YoutubeDL.getInstance().init(context)
+        FFmpeg.getInstance().init(context)
+    }
+
     override suspend fun fetchTrackInfo(url: String): Result<TrackInfo> = withContext(Dispatchers.IO) {
+        val initResult = ensureInitialized()
+        if (initResult.isFailure) {
+            return@withContext Result.failure(
+                initResult.exceptionOrNull() ?: IllegalStateException("Gagal inisialisasi mesin yt-dlp")
+            )
+        }
+
         runCatching {
             val request = YoutubeDLRequest(url).apply {
                 addOption("--no-playlist")
                 addOption("--skip-download")
+                addOption("--no-check-certificates")
+                addOption("--prefer-free-formats")
                 cookieStorage.getCookieFile()?.let { file ->
                     addOption("--cookies", file.absolutePath)
                 }
@@ -44,6 +61,14 @@ class YoutubeDlRepository(
         format: AudioFormat,
         targetDir: File
     ): Flow<DownloadProgress> = callbackFlow {
+        val initResult = ensureInitialized()
+        if (initResult.isFailure) {
+            val errorMsg = initResult.exceptionOrNull()?.localizedMessage ?: "Inisialisasi yt-dlp gagal"
+            trySend(DownloadProgress.Failed(errorMsg))
+            close()
+            return@callbackFlow
+        }
+
         val processId = UUID.randomUUID().toString()
         trySend(DownloadProgress.Downloading(0f, "", ""))
 
@@ -55,6 +80,7 @@ class YoutubeDlRepository(
             addOption("--add-metadata")
             addOption("--embed-thumbnail")
             addOption("--no-playlist")
+            addOption("--no-check-certificates")
             cookieStorage.getCookieFile()?.let { file ->
                 addOption("--cookies", file.absolutePath)
             }
@@ -78,11 +104,11 @@ class YoutubeDlRepository(
             if (downloadedFile != null && downloadedFile.exists()) {
                 trySend(DownloadProgress.Completed(downloadedFile.absolutePath, downloadedFile.name))
             } else {
-                trySend(DownloadProgress.Failed("Downloaded audio file not found"))
+                trySend(DownloadProgress.Failed("File audio tidak ditemukan setelah pengunduhan"))
             }
             close()
         } catch (e: Exception) {
-            trySend(DownloadProgress.Failed(e.localizedMessage ?: "Download failed"))
+            trySend(DownloadProgress.Failed(e.localizedMessage ?: "Gagal mengunduh audio"))
             close(e)
         }
 
@@ -97,4 +123,3 @@ class YoutubeDlRepository(
         private val SPEED_REGEX = """\b\d+(\.\d+)?[kKMGT]?i?B/s\b""".toRegex()
     }
 }
-

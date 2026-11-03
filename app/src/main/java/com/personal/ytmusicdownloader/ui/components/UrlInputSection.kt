@@ -38,6 +38,7 @@ fun UrlInputSection(
     isLoading: Boolean,
     onUrlChange: (String) -> Unit,
     onAnalyzeClick: () -> Unit,
+    onPasteAndAnalyze: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val clipboardManager = LocalClipboardManager.current
@@ -82,8 +83,12 @@ fun UrlInputSection(
             OutlinedButton(
                 onClick = {
                     val clipText = clipboardManager.getText()?.text.orEmpty()
-                    if (clipText.isNotBlank()) {
-                        onUrlChange(clipText.trim())
+                    val urlRegex = """https?://[^\s]+""".toRegex()
+                    val extracted = urlRegex.find(clipText)?.value.orEmpty()
+                    val finalUrl = if (extracted.isNotBlank()) extracted else clipText.trim()
+                    if (finalUrl.isNotBlank()) {
+                        onUrlChange(finalUrl)
+                        onPasteAndAnalyze?.invoke(finalUrl)
                     }
                 },
                 modifier = Modifier.weight(1f),

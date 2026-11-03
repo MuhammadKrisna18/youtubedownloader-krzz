@@ -45,16 +45,16 @@ class MainViewModel(
         _uiState.update { it.copy(url = url.trim()) }
     }
 
-    fun fetchTrackInfo() {
-        val currentUrl = _uiState.value.url
+    fun fetchTrackInfo(targetUrl: String? = null) {
+        val currentUrl = targetUrl ?: _uiState.value.url
         if (currentUrl.isBlank()) {
             _uiState.update { it.copy(userMessage = "Masukkan URL YouTube terlebih dahulu") }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingInfo = true, userMessage = null) }
-            downloadRepository.fetchTrackInfo(currentUrl).fold(
+            _uiState.update { it.copy(url = currentUrl.trim(), isLoadingInfo = true, userMessage = null) }
+            downloadRepository.fetchTrackInfo(currentUrl.trim()).fold(
                 onSuccess = { track ->
                     _uiState.update {
                         it.copy(

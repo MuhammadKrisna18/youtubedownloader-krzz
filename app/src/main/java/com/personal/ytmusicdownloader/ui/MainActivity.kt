@@ -41,8 +41,7 @@ class MainActivity : ComponentActivity() {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
             val url = extractUrl(sharedText)
             if (url.isNotBlank()) {
-                viewModel.onUrlChanged(url)
-                viewModel.fetchTrackInfo()
+                viewModel.fetchTrackInfo(url)
             }
         }
     }

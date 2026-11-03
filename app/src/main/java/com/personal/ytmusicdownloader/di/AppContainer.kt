@@ -25,7 +25,7 @@ class DefaultAppContainer(context: Context) : AppContainer {
     }
 
     override val downloadRepository: DownloadRepository by lazy {
-        YoutubeDlRepository(cookieStorage)
+        YoutubeDlRepository(context, cookieStorage)
     }
 
     override val appUpdateManager: AppUpdateManager by lazy {
