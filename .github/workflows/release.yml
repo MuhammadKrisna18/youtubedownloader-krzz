@@ -47,7 +47,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: |
+          CLEAN_VER="${TAG_NAME#v}"
+          ./gradlew assembleRelease -PappVersionName="$CLEAN_VER" -PappVersionCode="${{ github.run_number }}"
 
       - name: Create and Publish GitHub Release
         env:

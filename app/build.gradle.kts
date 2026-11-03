@@ -7,12 +7,31 @@ android {
   namespace = "com.personal.ytmusicdownloader"
   compileSdk = 36
 
+  val appVersionName = (project.findProperty("appVersionName") as? String)
+      ?.ifBlank { null }
+      ?: "1.0.0"
+
+  val appVersionCode = (project.findProperty("appVersionCode") as? String)
+      ?.toIntOrNull()
+      ?: 1
+
+  signingConfigs {
+    create("release") {
+      storeFile = file("release.keystore")
+      storePassword = "ytmusic2026"
+      keyAlias = "ytmusic"
+      keyPassword = "ytmusic2026"
+      enableV1Signing = true
+      enableV2Signing = true
+    }
+  }
+
   defaultConfig {
     applicationId = "com.personal.ytmusicdownloader"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0.0"
+    versionCode = appVersionCode
+    versionName = appVersionName
 
     ndk {
       abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -23,7 +42,7 @@ android {
     release {
       isMinifyEnabled = true
       isShrinkResources = true
-      signingConfig = signingConfigs.getByName("debug")
+      signingConfig = signingConfigs.getByName("release")
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }

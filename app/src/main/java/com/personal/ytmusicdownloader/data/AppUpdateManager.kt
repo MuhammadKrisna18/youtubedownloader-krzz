@@ -98,13 +98,13 @@ class AppUpdateManager(
 
             val response = okHttpClient.newCall(request).execute()
             if (!response.isSuccessful) {
-                error("Failed to download APK: ${response.code}")
+                error("Gagal mengunduh berkas APK: ${response.code}")
             }
 
-            val body = response.body ?: error("Empty response body")
+            val body = response.body ?: error("Respons kosong")
             val totalBytes = body.contentLength()
 
-            val updateDir = File(context.cacheDir, "updates").apply { if (!exists()) mkdirs() }
+            val updateDir = File(context.filesDir, "updates").apply { if (!exists()) mkdirs() }
             val apkFile = File(updateDir, "update.apk").apply { if (exists()) delete() }
 
             body.byteStream().use { input ->
@@ -123,6 +123,7 @@ class AppUpdateManager(
                 }
             }
 
+            apkFile.setReadable(true, false)
             apkFile
         }
     }
@@ -139,7 +140,7 @@ class AppUpdateManager(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                 data = Uri.parse("package:${context.packageName}")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
         }
@@ -147,7 +148,12 @@ class AppUpdateManager(
 
     fun installApk(apkFile: File): Result<Unit> = runCatching {
         if (!apkFile.exists()) {
-            error("APK file does not exist")
+            error("Berkas APK pembaruan tidak ditemukan")
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
+            openInstallPermissionSettings()
+            error("Silakan berikan izin instalasi aplikasi tidak dikenal, lalu coba lagi")
         }
 
         val apkUri = FileProvider.getUriForFile(
@@ -158,28 +164,34 @@ class AppUpdateManager(
 
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(apkUri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(intent)
     }
 
     companion object {
         fun isNewerVersion(current: String, latest: String): Boolean {
-            val cleanCurrent = current.trimStart('v', 'V').split("-")[0].trim()
-            val cleanLatest = latest.trimStart('v', 'V').split("-")[0].trim()
+            val cleanCurrent = current.trim().trimStart('v', 'V').split("-")[0].trim()
+            val cleanLatest = latest.trim().trimStart('v', 'V').split("-")[0].trim()
+
+            if (cleanCurrent.equals(cleanLatest, ignoreCase = true)) {
+                return false
+            }
 
             val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
             val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }
 
-            val maxLength = maxOf(currentParts.size, latestParts.size)
-            for (i in 0 until maxLength) {
-                val curr = currentParts.getOrElse(i) { 0 }
-                val lat = latestParts.getOrElse(i) { 0 }
-                if (lat > curr) return true
-                if (lat < curr) return false
+            val minLength = minOf(currentParts.size, latestParts.size)
+            for (i in 0 until minLength) {
+                if (latestParts[i] > currentParts[i]) return true
+                if (latestParts[i] < currentParts[i]) return false
+            }
+
+            if (latestParts.size > currentParts.size) {
+                return latestParts.subList(currentParts.size, latestParts.size).any { it > 0 }
             }
             return false
         }
     }
 }
-

@@ -65,7 +65,7 @@ fun MainScreen(
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        viewModel.checkForUpdate(BuildConfig.VERSION_NAME)
+        viewModel.checkForUpdate(BuildConfig.VERSION_NAME, isAutoCheck = true)
     }
 
     LaunchedEffect(uiState.userMessage) {

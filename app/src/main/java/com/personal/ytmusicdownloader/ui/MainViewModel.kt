@@ -171,7 +171,7 @@ class MainViewModel(
         _uiState.update { it.copy(cookieInfo = info) }
     }
 
-    fun checkForUpdate(currentVersion: String) {
+    fun checkForUpdate(currentVersion: String, isAutoCheck: Boolean = false) {
         viewModelScope.launch {
             _uiState.update { it.copy(isCheckingUpdate = true) }
             appUpdateManager.checkForUpdate(currentVersion).fold(
@@ -181,7 +181,9 @@ class MainViewModel(
                             isCheckingUpdate = false,
                             updateInfo = update,
                             showUpdateDialog = update.isUpdateAvailable,
-                            userMessage = if (!update.isUpdateAvailable) "Aplikasi sudah dalam versi terbaru" else null
+                            userMessage = if (!update.isUpdateAvailable && !isAutoCheck) {
+                                "Aplikasi sudah dalam versi terbaru"
+                            } else null
                         )
                     }
                 },
@@ -189,7 +191,7 @@ class MainViewModel(
                     _uiState.update {
                         it.copy(
                             isCheckingUpdate = false,
-                            userMessage = "Gagal memeriksa pembaruan: ${error.localizedMessage}"
+                            userMessage = if (!isAutoCheck) "Gagal memeriksa pembaruan: ${error.localizedMessage}" else null
                         )
                     }
                 }
