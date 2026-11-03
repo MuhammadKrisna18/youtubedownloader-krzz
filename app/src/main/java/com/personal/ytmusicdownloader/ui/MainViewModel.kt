@@ -104,7 +104,7 @@ class MainViewModel(
                 refreshCookieInfo()
                 _uiState.update {
                     it.copy(
-                        userMessage = "cookies.txt berhasil diimpor",
+                        userMessage = "Cookie YouTube berhasil diimpor dengan aman",
                         showCookieDialog = false
                     )
                 }
@@ -112,6 +112,25 @@ class MainViewModel(
             onFailure = { error ->
                 _uiState.update {
                     it.copy(userMessage = "Gagal mengimpor cookies: ${error.localizedMessage}")
+                }
+            }
+        )
+    }
+
+    fun saveCookieText(text: String) {
+        cookieStorage.saveCookieText(text).fold(
+            onSuccess = {
+                refreshCookieInfo()
+                _uiState.update {
+                    it.copy(
+                        userMessage = "Cookie YouTube berhasil disimpan dengan aman",
+                        showCookieDialog = false
+                    )
+                }
+            },
+            onFailure = { error ->
+                _uiState.update {
+                    it.copy(userMessage = "Gagal menyimpan cookies: ${error.localizedMessage}")
                 }
             }
         )

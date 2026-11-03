@@ -136,6 +136,7 @@ fun MainScreen(
             CookieDialog(
                 cookieInfo = uiState.cookieInfo,
                 onImportCookie = { uri -> viewModel.importCookie(uri) },
+                onSaveCookieText = { text -> viewModel.saveCookieText(text) },
                 onDeleteCookie = { viewModel.deleteCookie() },
                 onDismiss = { viewModel.dismissCookieDialog() }
             )
