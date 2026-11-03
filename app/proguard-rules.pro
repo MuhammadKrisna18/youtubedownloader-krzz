@@ -1,3 +1,8 @@
 -keep class com.yausername.youtubedl_android.** { *; }
 -keep class com.yausername.ffmpeg.** { *; }
-
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keep class com.personal.ytmusicdownloader.model.** { *; }

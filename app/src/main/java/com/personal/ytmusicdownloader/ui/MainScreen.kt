@@ -5,6 +5,13 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -68,7 +76,9 @@ fun MainScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         topBar = {
             TopBar(
                 hasCookie = uiState.cookieInfo.exists,
@@ -77,7 +87,8 @@ fun MainScreen(
                 onUpdateClick = { viewModel.checkForUpdate(BuildConfig.VERSION_NAME) }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -101,15 +112,21 @@ fun MainScreen(
                 onCancelClick = { viewModel.cancelDownload(context) }
             )
 
-            uiState.trackInfo?.let { track ->
-                TrackPreviewCard(
-                    trackInfo = track,
-                    selectedFormat = uiState.selectedFormat,
-                    isDownloading = uiState.downloadProgress is DownloadProgress.Downloading ||
-                            uiState.downloadProgress is DownloadProgress.Transcoding,
-                    onFormatSelect = { viewModel.selectFormat(it) },
-                    onDownloadClick = { viewModel.startDownload(context) }
-                )
+            AnimatedVisibility(
+                visible = uiState.trackInfo != null,
+                enter = fadeIn(animationSpec = tween(350)) + expandVertically(animationSpec = tween(350)),
+                exit = fadeOut(animationSpec = tween(250)) + shrinkVertically(animationSpec = tween(250))
+            ) {
+                uiState.trackInfo?.let { track ->
+                    TrackPreviewCard(
+                        trackInfo = track,
+                        selectedFormat = uiState.selectedFormat,
+                        isDownloading = uiState.downloadProgress is DownloadProgress.Downloading ||
+                                uiState.downloadProgress is DownloadProgress.Transcoding,
+                        onFormatSelect = { viewModel.selectFormat(it) },
+                        onDownloadClick = { viewModel.startDownload(context) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -135,4 +152,3 @@ fun MainScreen(
         }
     }
 }
-

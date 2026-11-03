@@ -1,20 +1,23 @@
 package com.personal.ytmusicdownloader.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
+private val LightColorScheme = lightColorScheme(
     primary = RedPrimary,
-    secondary = RedSecondary,
-    background = DarkBackground,
-    surface = DarkSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onPrimary = TextPrimary,
-    onSecondary = TextPrimary,
+    onPrimary = LightSurface,
+    primaryContainer = RedLight,
+    onPrimaryContainer = RedDark,
+    secondary = RedDark,
+    onSecondary = LightSurface,
+    background = LightBackground,
     onBackground = TextPrimary,
+    surface = LightSurface,
     onSurface = TextPrimary,
-    onSurfaceVariant = TextSecondary
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = TextSecondary,
+    outline = BorderSubtle
 )
 
 @Composable
@@ -22,9 +25,8 @@ fun YTDownloaderTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         content = content
     )
 }
-
