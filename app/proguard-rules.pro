@@ -6,8 +6,9 @@
 -keep interface com.fasterxml.jackson.** { *; }
 -dontwarn com.fasterxml.jackson.**
 
--keep class org.apache.commons.io.** { *; }
--dontwarn org.apache.commons.io.**
+-keep class org.apache.commons.** { *; }
+-keep interface org.apache.commons.** { *; }
+-dontwarn org.apache.commons.**
 
 -keep class org.tukaani.xz.** { *; }
 -dontwarn org.tukaani.xz.**

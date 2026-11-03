@@ -18,7 +18,7 @@ data class MainUiState(
     val isDownloadingUpdate: Boolean = false,
     val updateProgress: Float = 0f,
     val userMessage: String? = null,
+    val errorMessage: String? = null,
     val showCookieDialog: Boolean = false,
     val showUpdateDialog: Boolean = false
 )
-

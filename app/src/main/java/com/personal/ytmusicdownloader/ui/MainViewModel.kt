@@ -42,7 +42,7 @@ class MainViewModel(
     }
 
     fun onUrlChanged(url: String) {
-        _uiState.update { it.copy(url = url.trim()) }
+        _uiState.update { it.copy(url = url.trim(), errorMessage = null) }
     }
 
     fun fetchTrackInfo(targetUrl: String? = null) {
@@ -53,13 +53,14 @@ class MainViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(url = currentUrl.trim(), isLoadingInfo = true, userMessage = null) }
+            _uiState.update { it.copy(url = currentUrl.trim(), isLoadingInfo = true, userMessage = null, errorMessage = null) }
             downloadRepository.fetchTrackInfo(currentUrl.trim()).fold(
                 onSuccess = { track ->
                     _uiState.update {
                         it.copy(
                             isLoadingInfo = false,
-                            trackInfo = track
+                            trackInfo = track,
+                            errorMessage = null
                         )
                     }
                 },
@@ -67,7 +68,7 @@ class MainViewModel(
                     _uiState.update {
                         it.copy(
                             isLoadingInfo = false,
-                            userMessage = error.localizedMessage ?: "Gagal mengambil data video"
+                            errorMessage = error.localizedMessage ?: "Gagal mengambil data video"
                         )
                     }
                 }
