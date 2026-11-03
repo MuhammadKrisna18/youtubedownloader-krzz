@@ -7,6 +7,8 @@ import java.io.File
 
 class CookieStorage(private val context: Context) {
 
+    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
     private val targetCookieFile: File
         get() = File(context.filesDir, COOKIE_FILE_NAME)
 
@@ -15,8 +17,11 @@ class CookieStorage(private val context: Context) {
     }
 
     fun ensureCookieInstalled() {
-        if (!hasCookie()) {
-            restoreDefaultCookie()
+        val installedVersion = prefs.getInt(KEY_COOKIE_VERSION, 0)
+        if (!hasCookie() || installedVersion < CURRENT_COOKIE_VERSION) {
+            restoreDefaultCookie().onSuccess {
+                prefs.edit().putInt(KEY_COOKIE_VERSION, CURRENT_COOKIE_VERSION).apply()
+            }
         }
     }
 
@@ -24,12 +29,14 @@ class CookieStorage(private val context: Context) {
         val defaultText = DefaultCookieProvider.getDecryptedCookie()
             ?: error("Cookie bawaan tidak dapat dimuat")
         saveCookieText(defaultText).getOrThrow()
+        prefs.edit().putInt(KEY_COOKIE_VERSION, CURRENT_COOKIE_VERSION).apply()
     }
 
     fun saveCookieFromUri(uri: Uri): Result<Unit> = runCatching {
         val content = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             ?: error("Gagal membaca file dari URI")
         saveCookieText(content).getOrThrow()
+        prefs.edit().putInt(KEY_COOKIE_VERSION, CURRENT_COOKIE_VERSION).apply()
     }
 
     fun saveCookieText(rawContent: String): Result<Unit> = runCatching {
@@ -56,7 +63,10 @@ class CookieStorage(private val context: Context) {
         )
     }
 
-    fun deleteCookie(): Boolean = if (targetCookieFile.exists()) targetCookieFile.delete() else false
+    fun deleteCookie(): Boolean {
+        prefs.edit().remove(KEY_COOKIE_VERSION).apply()
+        return if (targetCookieFile.exists()) targetCookieFile.delete() else false
+    }
 
     private fun sanitize(raw: String): String {
         val builder = StringBuilder()
@@ -84,6 +94,9 @@ class CookieStorage(private val context: Context) {
     }
 
     companion object {
+        private const val PREFS_NAME = "cookie_storage_prefs"
+        private const val KEY_COOKIE_VERSION = "installed_cookie_version"
+        private const val CURRENT_COOKIE_VERSION = 2
         private const val COOKIE_FILE_NAME = "cookies.txt"
         private const val COOKIE_HEADER = "# Netscape HTTP Cookie File\n# https://curl.haxx.se/rfc/cookie_spec.html\n# This is a generated file! Do not edit."
     }
