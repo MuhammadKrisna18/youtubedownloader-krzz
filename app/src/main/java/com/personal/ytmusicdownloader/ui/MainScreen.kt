@@ -47,7 +47,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.personal.ytmusicdownloader.BuildConfig
 import com.personal.ytmusicdownloader.model.DownloadProgress
 import com.personal.ytmusicdownloader.ui.components.ActiveDownloadCard
-import com.personal.ytmusicdownloader.ui.components.CookieDialog
 import com.personal.ytmusicdownloader.ui.components.TopBar
 import com.personal.ytmusicdownloader.ui.components.TrackPreviewCard
 import com.personal.ytmusicdownloader.ui.components.UpdateDialog
@@ -92,9 +91,7 @@ fun MainScreen(
             .background(MaterialTheme.colorScheme.background),
         topBar = {
             TopBar(
-                hasCookie = uiState.cookieInfo.exists,
                 isCheckingUpdate = uiState.isCheckingUpdate,
-                onCookieClick = { viewModel.openCookieDialog() },
                 onUpdateClick = { viewModel.checkForUpdate(BuildConfig.VERSION_NAME) }
             )
         },
@@ -174,17 +171,6 @@ fun MainScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        if (uiState.showCookieDialog) {
-            CookieDialog(
-                cookieInfo = uiState.cookieInfo,
-                onImportCookie = { uri -> viewModel.importCookie(uri) },
-                onSaveCookieText = { text -> viewModel.saveCookieText(text) },
-                onRestoreDefaultCookie = { viewModel.restoreDefaultCookie() },
-                onDeleteCookie = { viewModel.deleteCookie() },
-                onDismiss = { viewModel.dismissCookieDialog() }
-            )
         }
 
         if (uiState.showUpdateDialog && uiState.updateInfo != null) {

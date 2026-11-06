@@ -1,12 +1,10 @@
 package com.personal.ytmusicdownloader.ui
 
 import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.personal.ytmusicdownloader.data.AppUpdateManager
-import com.personal.ytmusicdownloader.data.CookieStorage
 import com.personal.ytmusicdownloader.data.DownloadRepository
 import com.personal.ytmusicdownloader.model.AudioFormat
 import com.personal.ytmusicdownloader.model.DownloadProgress
@@ -19,7 +17,6 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val downloadRepository: DownloadRepository,
-    private val cookieStorage: CookieStorage,
     private val appUpdateManager: AppUpdateManager
 ) : ViewModel() {
 
@@ -27,7 +24,6 @@ class MainViewModel(
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        refreshCookieInfo()
         observeDownloadProgress()
     }
 
@@ -104,79 +100,6 @@ class MainViewModel(
         }
     }
 
-    fun importCookie(uri: Uri) {
-        cookieStorage.saveCookieFromUri(uri).fold(
-            onSuccess = {
-                refreshCookieInfo()
-                _uiState.update {
-                    it.copy(
-                        userMessage = "Cookie YouTube berhasil diimpor dengan aman",
-                        showCookieDialog = false
-                    )
-                }
-            },
-            onFailure = { error ->
-                _uiState.update {
-                    it.copy(userMessage = "Gagal mengimpor cookies: ${error.localizedMessage}")
-                }
-            }
-        )
-    }
-
-    fun saveCookieText(text: String) {
-        cookieStorage.saveCookieText(text).fold(
-            onSuccess = {
-                refreshCookieInfo()
-                _uiState.update {
-                    it.copy(
-                        userMessage = "Cookie YouTube berhasil disimpan dengan aman",
-                        showCookieDialog = false
-                    )
-                }
-            },
-            onFailure = { error ->
-                _uiState.update {
-                    it.copy(userMessage = "Gagal menyimpan cookies: ${error.localizedMessage}")
-                }
-            }
-        )
-    }
-
-    fun restoreDefaultCookie() {
-        cookieStorage.restoreDefaultCookie().fold(
-            onSuccess = {
-                refreshCookieInfo()
-                _uiState.update {
-                    it.copy(
-                        userMessage = "Cookie bawaan berhasil dipasang",
-                        showCookieDialog = false
-                    )
-                }
-            },
-            onFailure = { error ->
-                _uiState.update {
-                    it.copy(userMessage = "Gagal memasang cookie bawaan: ${error.localizedMessage}")
-                }
-            }
-        )
-    }
-
-    fun deleteCookie() {
-        val deleted = cookieStorage.deleteCookie()
-        refreshCookieInfo()
-        _uiState.update {
-            it.copy(
-                userMessage = if (deleted) "cookies.txt berhasil dihapus" else "File cookie tidak ditemukan",
-                showCookieDialog = false
-            )
-        }
-    }
-
-    private fun refreshCookieInfo() {
-        val info = cookieStorage.getCookieInfo()
-        _uiState.update { it.copy(cookieInfo = info) }
-    }
-
     fun checkForUpdate(currentVersion: String, isAutoCheck: Boolean = false) {
         viewModelScope.launch {
             _uiState.update { it.copy(isCheckingUpdate = true) }
@@ -239,14 +162,6 @@ class MainViewModel(
         }
     }
 
-    fun openCookieDialog() {
-        _uiState.update { it.copy(showCookieDialog = true) }
-    }
-
-    fun dismissCookieDialog() {
-        _uiState.update { it.copy(showCookieDialog = false) }
-    }
-
     fun openUpdateDialog() {
         _uiState.update { it.copy(showUpdateDialog = true) }
     }
@@ -262,12 +177,11 @@ class MainViewModel(
 
 class MainViewModelFactory(
     private val downloadRepository: DownloadRepository,
-    private val cookieStorage: CookieStorage,
     private val appUpdateManager: AppUpdateManager
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return MainViewModel(downloadRepository, cookieStorage, appUpdateManager) as T
+        return MainViewModel(downloadRepository, appUpdateManager) as T
     }
 }
 

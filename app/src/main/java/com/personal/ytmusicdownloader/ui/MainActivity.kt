@@ -15,7 +15,6 @@ class MainActivity : ComponentActivity() {
         val app = application as YTDownloaderApp
         MainViewModelFactory(
             downloadRepository = app.container.downloadRepository,
-            cookieStorage = app.container.cookieStorage,
             appUpdateManager = app.container.appUpdateManager
         )
     }
